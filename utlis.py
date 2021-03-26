@@ -420,8 +420,7 @@ def define_side(full_chess_corner, chess_corner,img):
             else:
                 result.append([c1, c2, 'checker'])
                 print(m , 'checker')
-                
-    print(result)
+
     if check_b == 1 and check_w == 1:
         for i in range(len(result)):
             if result[i][2] == 'white':
@@ -502,10 +501,7 @@ def define_side(full_chess_corner, chess_corner,img):
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     warped = cv2.warpPerspective(img, M, (w, w))
 
-    cv2.imshow('warp', warped)
-    cv2.waitKey()
-
-    return ([x2, y2],[x1, y1], [x4, y4], [x3, y3])
+    return warped
 
             
 
