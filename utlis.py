@@ -371,7 +371,7 @@ def define_side(full_chess_corner, chess_corner,img):
     for coor in sides[3]:
         color[3].append(img[int(coor[1]), int(coor[0])])
         test.append([int(coor[0]),int(coor[1])])
-    result = [[],[],[],[]]
+    result = []
     check_w = 0
     check_b = 0
     for m in range(4):
@@ -386,15 +386,15 @@ def define_side(full_chess_corner, chess_corner,img):
             c2 = full_chess_corner[90]
         elif m == 1:
             c1 = full_chess_corner[9]
-            c2 = full_chess_corner[99]
+            c2 = full_chess_corner[0]
         elif m == 2:
-            c1 = full_chess_corner[0]
+            c1 = full_chess_corner[99]
             c2 = full_chess_corner[9]
         elif m == 3:
             c1 = full_chess_corner[90]
             c2 = full_chess_corner[99]
 
-        (full_chess_corner[0], full_chess_corner[90])
+        #(full_chess_corner[0], full_chess_corner[90])
         for n in color[m]:
             if n > 190:
                 temp.append(0)
@@ -406,6 +406,7 @@ def define_side(full_chess_corner, chess_corner,img):
                 temp.append(-1)
                 error -= 1
         if error < -2:
+            result.append([0,0,'error'])
             print(m , 'error')
         else:            
             if black > 3 and white < 1:
@@ -419,39 +420,92 @@ def define_side(full_chess_corner, chess_corner,img):
             else:
                 result.append([c1, c2, 'checker'])
                 print(m , 'checker')
+                
+    print(result)
     if check_b == 1 and check_w == 1:
         for i in range(len(result)):
             if result[i][2] == 'white':
                 x1 = result[i][0][0]
                 y1 = result[i][0][1]
                 x2 = result[i][1][0]
-                y2 = result[i][0][1]
+                y2 = result[i][1][1]
             elif result[i][2] == 'black':
                 x3 = result[i][0][0]
                 y3 = result[i][0][1]
                 x4 = result[i][1][0]
-                y4 = result[i][0][1]
-    elif check_b == 1 and check_w != 1:
-
-
-    
-
-    src_pts = np.array([[x, y+h],
-                        [x, y],
-                        [x+w, y],
-                        [x+w, y+h]], dtype="float32")
-    dst_pts = np.array([[0, h_max-1],
+                y4 = result[i][1][1]
+    elif check_b == 0 and check_w == 1:
+        for i in range(len(result)):
+            if result[i][2] == 'white':
+                x1 = result[i][0][0]
+                y1 = result[i][0][1]
+                x2 = result[i][1][0]
+                y2 = result[i][1][1]
+                if i == 0:                    
+                    x3 = result[2][0][0]
+                    y3 = result[2][0][1]
+                    x4 = result[2][1][0]
+                    y4 = result[2][1][1]
+                elif i == 1:                    
+                    x3 = result[3][0][0]
+                    y3 = result[3][0][1]
+                    x4 = result[3][1][0]
+                    y4 = result[3][1][1]
+                elif i == 2:                    
+                    x3 = result[0][0][0]
+                    y3 = result[0][0][1]
+                    x4 = result[0][1][0]
+                    y4 = result[0][1][1]
+                elif i == 3:                    
+                    x3 = result[1][0][0]
+                    y3 = result[1][0][1]
+                    x4 = result[1][1][0]
+                    y4 = result[1][1][1]
+    elif check_b == 1 and check_w == 0:
+        for i in range(len(result)):
+            if result[i][2] == 'black':
+                x3 = result[i][0][0]
+                y3 = result[i][0][1]
+                x4 = result[i][1][0]
+                y4 = result[i][1][1]
+                if i == 0:                    
+                    x1 = result[2][0][0]
+                    y1 = result[2][0][1]
+                    x2 = result[2][1][0]
+                    y2 = result[2][1][1]
+                elif i == 1:                    
+                    x1 = result[3][0][0]
+                    y1 = result[3][0][1]
+                    x2 = result[3][1][0]
+                    y2 = result[3][1][1]
+                elif i == 2:                    
+                    x1 = result[0][0][0]
+                    y1 = result[0][0][1]
+                    x2 = result[0][1][0]
+                    y2 = result[0][1][1]
+                elif i == 3:                    
+                    x1 = result[1][0][0]
+                    y1 = result[1][0][1]
+                    x2 = result[1][1][0]
+                    y2 = result[1][1][1]
+        
+    w = 500
+    src_pts = np.array([[x1, y1],
+                        [x4, y4],
+                        [x3, y3],
+                        [x2, y2]], dtype="float32")
+    dst_pts = np.array([[0, w],
                         [0, 0],
-                        [w_max-1, 0],
-                        [w_max-1, h_max-1]], dtype="float32")
+                        [w, 0],
+                        [w, w]], dtype="float32")
     matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    warped = cv2.warpPerspective(contour_img, M, (w_max, h_max))
+    warped = cv2.warpPerspective(img, M, (w, w))
 
-    
-    return warped
+    cv2.imshow('warp', warped)
+    cv2.waitKey()
 
-    return test
+    return ([x2, y2],[x1, y1], [x4, y4], [x3, y3])
 
             
 
