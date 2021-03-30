@@ -600,15 +600,15 @@ def draw_line(img):
         cv2.line(img,c1,c2,(255,255,255),7)
     return img
 
-def crop_img(img):
+def crop_img(img, index):
     for x in range(8): 
         for y in range(8):
             c1 = (x*80,(y+1)*80)
             c2 = (x*80,y*80)
             c3 = ((x+1)*80,y*80)
             c4 = ((x+1)*80,(y+1)*80)
+            
             w = 80
-
             coor = [c1, c2, c3, c4]
             src_pts = np.array(coor, dtype="float32")
             dst_pts = np.array([[0, w],
@@ -617,13 +617,32 @@ def crop_img(img):
                                 [w, w]], dtype="float32")
             matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
             M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-            warped = cv2.warpPerspective(img, M, (w, w))
-            
-            letter = ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
+            result = cv2.warpPerspective(img, M, (w, w))
+
+            if x%2 == 0: 
+                if y%2 ==0:
+                    val = 255
+                elif y%2 == 1:
+                    val = 0
+            elif x%2 == 1:
+                if y%2 ==0:
+                    val = 0
+                elif y%2 == 1:
+                    val = 255
+                    
+            path_edge = 8
+            result[0:path_edge, 0:result.shape[1]]= val
+            result[result.shape[0] - path_edge:result.shape[0], 0:result.shape[1]] = val
+            result[0:result.shape[0], 0:path_edge]  = val
+            result[0:result.shape[0], result.shape[1] - path_edge:result.shape[1]] = val
+
+
+
+            letter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
             num = ['8', '7', '6', '5', '4', '3', '2', '1']
-            fname = '.cropped/'+ letter[x] + num[y] + '.jpg'
-            # print(fname)
-            cv2.imwrite(fname, warped)
+            fname = './data/cropped/'+ index + '_' + letter[x] + num[y] + '.jpg'
+            #print(fname)
+            cv2.imwrite(fname, result)
 
 
 # ----------------------------------------------------------------------

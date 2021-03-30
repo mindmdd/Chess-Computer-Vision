@@ -21,7 +21,8 @@ if len(images) < 1:
     sys.exit()
 
 else:    
-    for fname in images:
+    for index in range(len(images)):
+        fname = images[index]
         # Read the file and convert file
         img     = cv2.imread(fname)
         img     = utlis.image_resize(img, height = 500)
@@ -41,11 +42,11 @@ else:
         # Defineside and warp chessboard             
         warped, test, warp_coor = utlis.define_side(full_chess_corner, temp_chess_corner, gray_edit.copy(), gray.copy())
 
-        # Draw line on chessboard
-        cv2.imwrite('./data/warpped.jpg', warped) 
-        warped = cv2.imread('./data/warpped.jpg')
-        utlis.field_contour(warped, './data/warpped.jpg')
-        warped = cv2.imread('./data/warpped.jpg')
+        # # Draw line on chessboard
+        # cv2.imwrite('./data/warpped.jpg', warped) 
+        # warped = cv2.imread('./data/warpped.jpg')
+        # utlis.field_contour(warped, './data/warpped.jpg')
+        # warped = cv2.imread('./data/warpped.jpg')
     
         # Displaying the image 
         image = gray_edit_color.copy()
@@ -54,7 +55,7 @@ else:
         
         withLine = utlis.houghline(warped.copy())
         withLine2 = utlis.draw_line(warped.copy())
-        utlis.crop_img(withLine2)
+        utlis.crop_img(warped, str(index))
 
         cv2.imshow('new', image)
         cv2.imshow('warp', warped)
