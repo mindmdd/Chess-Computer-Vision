@@ -30,7 +30,7 @@ def distort(fname):
     # crop the image
     x, y, w, h = roi
     dst = dst[y:y+h, x:x+w]
-    dst     = image_resize(dst, height = 500)
+    dst     = image_resize(dst, height = 640)
     cv2.imshow('dst',dst)
     cv2.waitKey()
     return dst
@@ -95,8 +95,8 @@ def houghline(gray):
                 l = linesP[i][0]
                 cv2.line(cdstP, (l[0], l[1]), (l[2], l[3]), (0,0,255), 3, cv2.LINE_AA)
         
-        cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
-        cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
+        # cv2.imshow("Detected Lines (in red) - Standard Hough Line Transform", cdst)
+        # cv2.imshow("Detected Lines (in red) - Probabilistic Line Transform", cdstP)
         
         return cdst
 
@@ -147,7 +147,7 @@ def sort_order(org_list):
 def detect_chessboard(img, gray):
     nRows = 6
     nCols = 6
-    dimension = 20
+    dimension = 25
 
     chess_list = []
 
@@ -173,14 +173,11 @@ def detect_chessboard(img, gray):
 
         # Draw and display the corners
         cv2.drawChessboardCorners(img, (nCols,nRows), corners2,ret)
-        #print(corners2)
-        # cv2.imshow('img',img)
+
+        # cv2.imshow('Detect chessboard',img)
         # cv2.waitKey()
-        # print("Image accepted")
         objpoints.append(objp)
         imgpoints.append(corners2)
-
-        # cv2.waitKey(0)
     else:
         print("Image declined")
 
@@ -190,7 +187,7 @@ def detect_chessboard(img, gray):
 
     return chess_list
 
-def field_contour(img):
+def field_contour(img, name):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
     #gray = cv2.equalizeHist(gray)
     #gray = cv2.medianBlur(gray,9)  
@@ -200,7 +197,7 @@ def field_contour(img):
     gray_cp = gray.copy() 
     gray_blur = cv2.medianBlur(gray_cp,7)
     gray = cv2.medianBlur(gray_cp,3)
-    cv2.imwrite('data/gray.jpg', gray_blur)
+    cv2.imwrite(name, gray_blur)
     # cv2.imshow('gray',gray)
     # cv2.waitKey()
 
@@ -559,7 +556,6 @@ def define_side(full_chess_corner, chess_corner,edited_img, img):
             elif final_coor[i] == main_coor[1]:
                 final_coor[i] = new_coor[1]
 
-        for i in range(len(final_coor)):
             if final_coor[i] == result[error_index][0]:
                 if result[error_index][3] == 0:
                     final_coor[i] = full_chess_corner[1]
@@ -580,7 +576,7 @@ def define_side(full_chess_corner, chess_corner,edited_img, img):
                 elif result[error_index][3] == 3:
                     final_coor[i] = full_chess_corner[89]
 
-    w = 500
+    w = 640
     src_pts = np.array(final_coor, dtype="float32")
     dst_pts = np.array([[0, w],
                         [0, 0],
@@ -590,7 +586,44 @@ def define_side(full_chess_corner, chess_corner,edited_img, img):
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
     warped = cv2.warpPerspective(img, M, (w, w))
 
-    return warped, test
+    return warped, test, final_coor
+
+def draw_line(img):
+    d = 0
+    for x in range(8):        
+        c1 = ((x*80)+d,0)
+        c2 = ((x*80)+d,640)
+        cv2.line(img,c1,c2,(255,255,255),7)
+    for y in range(8):        
+        c1 = (0,(y*80)+d)
+        c2 = (640,(y*80)+d)
+        cv2.line(img,c1,c2,(255,255,255),7)
+    return img
+
+def crop_img(img):
+    for x in range(8): 
+        for y in range(8):
+            c1 = (x*80,(y+1)*80)
+            c2 = (x*80,y*80)
+            c3 = ((x+1)*80,y*80)
+            c4 = ((x+1)*80,(y+1)*80)
+            w = 80
+
+            coor = [c1, c2, c3, c4]
+            src_pts = np.array(coor, dtype="float32")
+            dst_pts = np.array([[0, w],
+                                [0, 0],
+                                [w, 0],
+                                [w, w]], dtype="float32")
+            matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
+            M = cv2.getPerspectiveTransform(src_pts, dst_pts)
+            warped = cv2.warpPerspective(img, M, (w, w))
+            
+            letter = ['h', 'g', 'f', 'e', 'd', 'c', 'b', 'a']
+            num = ['8', '7', '6', '5', '4', '3', '2', '1']
+            fname = '.cropped/'+ letter[x] + num[y] + '.jpg'
+            # print(fname)
+            cv2.imwrite(fname, warped)
 
 
 # ----------------------------------------------------------------------
