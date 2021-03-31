@@ -55,15 +55,15 @@ else:
         if compare == False:
             # Split image and add border
             split_cell = utlis.split_cell(warped, 'cropped_1')
-            hist_list_1 = utlis.getHist('./data/cropped_1')
+            hist_list_1, name = utlis.getHist('./data/cropped_1')
             cv2.imshow('split_cell', split_cell)
             compare = True
         elif compare == True:
             # Split image and add border
             split_cell = utlis.split_cell(warped, 'cropped_2')
-            hist_list_2 = utlis.getHist('./data/cropped_2')
+            hist_list_2, name = utlis.getHist('./data/cropped_2')
             cv2.imshow('split_cell', split_cell)
-            compare = utlis.compareHist(hist_list_1, hist_list_2)      
+            compare = utlis.compareHist(hist_list_1, hist_list_2, name)      
 
         cv2.waitKey()    
 

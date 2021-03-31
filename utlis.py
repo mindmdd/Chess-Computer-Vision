@@ -660,27 +660,44 @@ def getHist(folname):
     images      = glob.glob(filename)
 
     histogram = []
+    name = []
+    # channels = [0, 1]
+    # h_bins = 50
+    # s_bins = 60
+    # histSize = [h_bins, s_bins]
+    # # hue varies from 0 to 179, saturation from 0 to 255
+    # h_ranges = [0, 180]
+    # s_ranges = [0, 256]
+    # ranges = h_ranges + s_ranges # concat lists
 
     for fname in images:
         img     = cv2.imread(fname)
         gray    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
         h = cv2.calcHist([gray], [0], None, [256], [0, 256])
-        histogram.append([h,fname[len(fname)-6:len(fname)-4]])
-    return histogram
+        # h = cv2.calcHist([gray], channels, None, histSize, ranges, accumulate=False)
+        cv2.normalize(h, h, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+
+        name.append(fname[len(fname)-6:len(fname)-4])
+        histogram.append(h)
+        
+    return (histogram,name)
 
     
-def compareHist(hist1, hist2):
-    
-    # print(hist1, hist2)
+def compareHist(hist1, hist2, name):
     for i in range(len(hist1)):        
         plt.subplot(8, 8, 8*(8-(i//8)-1)+(i%8)+1)
-        plt.plot(list(range(len(hist1)*4)), hist1[i][0],color='green')
-        plt.ylabel(hist1[i][1])
+        plt.plot(list(range(len(hist1)*4)), hist1[i],color='green')
+        plt.ylabel(name[i])
 
         plt.twinx()
-        plt.plot(list(range(len(hist2)*4)), hist2[i][0], color='blue')
-        plt.ylabel(hist2[i][1])
-    plt.show()
+        plt.plot(list(range(len(hist2)*4)), hist2[i], color='blue')
+        plt.ylabel(name[i])
+    # plt.show()
+
+    for compare_method in range(4):
+        for i in range(len(hist1)): 
+            base_test = cv2.compareHist(hist1[i], hist2[i], compare_method)
+            print('Method:', compare_method, ' : ', base_test)
 
     return False
 
