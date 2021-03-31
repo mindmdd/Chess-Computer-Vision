@@ -7,6 +7,7 @@ import sys
 import argparse
 import yaml
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def distort(fname):
@@ -600,7 +601,7 @@ def draw_line(img):
         cv2.line(img,c1,c2,(255,255,255),7)
     return img
 
-def split_cell(img, index):
+def split_cell(img, folname):
     horz = []
     for x in range(8): 
         vert = []
@@ -642,7 +643,7 @@ def split_cell(img, index):
 
             letter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
             num = ['8', '7', '6', '5', '4', '3', '2', '1']
-            fname = './data/cropped/'+ index + '_' + letter[x] + num[y] + '.jpg'
+            fname = './data/' + folname + '/'+ letter[x] + num[y] + '.jpg'
 
             vert.append(result)
             #print(fname)
@@ -651,6 +652,39 @@ def split_cell(img, index):
         horz.append(V)
     H = np.concatenate(horz, axis=1)
     return H
+
+def getHist(folname):
+    workingFolder   = folname
+    imageType       = 'jpg'
+    filename    = workingFolder + "/*." + imageType
+    images      = glob.glob(filename)
+
+    histogram = []
+
+    for fname in images:
+        img     = cv2.imread(fname)
+        gray    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+        h = cv2.calcHist([gray], [0], None, [256], [0, 256])
+        histogram.append([h,fname[len(fname)-6:len(fname)-4]])
+    return histogram
+
+    
+def compareHist(hist1, hist2):
+    
+    # print(hist1, hist2)
+    for i in range(len(hist1)):        
+        plt.subplot(8, 8, 8*(8-(i//8)-1)+(i%8)+1)
+        plt.plot(list(range(len(hist1)*4)), hist1[i][0],color='green')
+        plt.ylabel(hist1[i][1])
+
+        plt.twinx()
+        plt.plot(list(range(len(hist2)*4)), hist2[i][0], color='blue')
+        plt.ylabel(hist2[i][1])
+    plt.show()
+
+    return False
+
+
 
 
 # ----------------------------------------------------------------------

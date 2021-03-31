@@ -16,6 +16,8 @@ filename    = workingFolder + "/*." + imageType
 images      = glob.glob(filename)
 #------------------------------------------
 
+compare = False
+
 if len(images) < 1:
     print("No image found")
     sys.exit()
@@ -41,26 +43,28 @@ else:
 
         # Defineside and warp chessboard             
         warped, test, warp_coor = utlis.define_side(full_chess_corner, temp_chess_corner, gray_edit.copy(), gray.copy())
-
-        # # Draw line on chessboard
-        # cv2.imwrite('./data/warpped.jpg', warped) 
-        # warped = cv2.imread('./data/warpped.jpg')
-        # utlis.field_contour(warped, './data/warpped.jpg')
-        # warped = cv2.imread('./data/warpped.jpg')
+        
     
         # Displaying the image 
         image = gray_edit_color.copy()
         for i in temp_chess_corner  :
             image = cv2.circle(image, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
-        
-        # withLine = utlis.houghline(warped.copy())
-        # withLine2 = utlis.draw_line(warped.copy())
-        split_cell = utlis.split_cell(warped, str(index))
-
         cv2.imshow('new', image)
         # cv2.imshow('warped', warped)
-        cv2.imshow('split_cell', split_cell)
 
-        cv2.waitKey()
-                
+        if compare == False:
+            # Split image and add border
+            split_cell = utlis.split_cell(warped, 'cropped_1')
+            hist_list_1 = utlis.getHist('./data/cropped_1')
+            cv2.imshow('split_cell', split_cell)
+            compare = True
+        elif compare == True:
+            # Split image and add border
+            split_cell = utlis.split_cell(warped, 'cropped_2')
+            hist_list_2 = utlis.getHist('./data/cropped_2')
+            cv2.imshow('split_cell', split_cell)
+            compare = utlis.compareHist(hist_list_1, hist_list_2)      
+
+        cv2.waitKey()    
+
 cv2.destroyAllWindows()
