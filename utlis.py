@@ -600,8 +600,10 @@ def draw_line(img):
         cv2.line(img,c1,c2,(255,255,255),7)
     return img
 
-def crop_img(img, index):
+def split_cell(img, index):
+    horz = []
     for x in range(8): 
+        vert = []
         for y in range(8):
             c1 = (x*80,(y+1)*80)
             c2 = (x*80,y*80)
@@ -641,8 +643,14 @@ def crop_img(img, index):
             letter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
             num = ['8', '7', '6', '5', '4', '3', '2', '1']
             fname = './data/cropped/'+ index + '_' + letter[x] + num[y] + '.jpg'
+
+            vert.append(result)
             #print(fname)
             cv2.imwrite(fname, result)
+        V = np.concatenate(vert, axis=0)
+        horz.append(V)
+    H = np.concatenate(horz, axis=1)
+    return H
 
 
 # ----------------------------------------------------------------------

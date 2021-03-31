@@ -53,13 +53,14 @@ else:
         for i in temp_chess_corner  :
             image = cv2.circle(image, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
         
-        withLine = utlis.houghline(warped.copy())
-        withLine2 = utlis.draw_line(warped.copy())
-        utlis.crop_img(warped, str(index))
+        # withLine = utlis.houghline(warped.copy())
+        # withLine2 = utlis.draw_line(warped.copy())
+        split_cell = utlis.split_cell(warped, str(index))
 
         cv2.imshow('new', image)
-        cv2.imshow('warp', warped)
-        cv2.imshow('withLine', withLine2)
+        # cv2.imshow('warped', warped)
+        cv2.imshow('split_cell', split_cell)
+
         cv2.waitKey()
                 
 cv2.destroyAllWindows()
