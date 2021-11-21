@@ -49,22 +49,24 @@ else:
         image = gray_edit_color.copy()
         for i in temp_chess_corner  :
             image = cv2.circle(image, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
-        cv2.imshow('new', image)
+        cv2.imshow('Detect Point', image)
         # cv2.imshow('warped', warped)
 
         if compare == False:
             # Split image and add border
             split_cell = utlis.split_cell(warped, 'cropped_1')
-            hist_list_1, name = utlis.getHist('./data/cropped_1')
-            cv2.imshow('split_cell', split_cell)
+            cv2.imshow('split_cell_1', split_cell)
             compare = True
         elif compare == True:
             # Split image and add border
             split_cell = utlis.split_cell(warped, 'cropped_2')
-            hist_list_2, name = utlis.getHist('./data/cropped_2')
-            cv2.imshow('split_cell', split_cell)
-            compare = utlis.compareHist(hist_list_1, hist_list_2, name)      
+            cv2.imshow('split_cell_2', split_cell)
+            compare_cell = utlis.changes()
+            cv2.imshow('compare_cell', compare_cell)
+            indicated_cell = utlis.change_indicator()
+            cv2.imshow('indicated_cell', indicated_cell)      
 
         cv2.waitKey()    
 
 cv2.destroyAllWindows()
+ 

@@ -8,6 +8,7 @@ import argparse
 import yaml
 import numpy as np
 import matplotlib.pyplot as plt
+import imutils
 
 
 def distort(fname):
@@ -639,8 +640,6 @@ def split_cell(img, folname):
             result[0:result.shape[0], 0:path_edge]  = val
             result[0:result.shape[0], result.shape[1] - path_edge:result.shape[1]] = val
 
-
-
             letter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
             num = ['8', '7', '6', '5', '4', '3', '2', '1']
             fname = './data/' + folname + '/'+ letter[x] + num[y] + '.jpg'
@@ -652,6 +651,145 @@ def split_cell(img, folname):
         horz.append(V)
     H = np.concatenate(horz, axis=1)
     return H
+
+def changes():
+
+    workingFolder1   = './data/cropped_1'
+    workingFolder2   = './data/cropped_2'
+    imageType       = 'jpg'
+    filename1    = workingFolder1 + "/*." + imageType
+    filename2    = workingFolder2 + "/*." + imageType
+    images1      = glob.glob(filename1)
+    images2      = glob.glob(filename2)
+
+    horz = []
+    vert = [[],[],[],[],[],[],[],[]]
+
+    row = 7
+
+    for i in range(len(images1)):
+        img1     = cv2.imread(images1[i])
+        img2     = cv2.imread(images2[i])
+
+        diff = cv2.absdiff(img1, img2)
+        mask = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+
+        th = 35
+        imask =  mask>th
+
+        canvas = np.zeros_like(img2, np.uint8)
+        canvas[imask] = 255
+
+        name = "./data/mask/" + images1[i][len(images1[i])-6::]
+
+        cv2.imwrite(name, canvas)
+
+        horz.append(canvas)
+
+        if i!= 0 and (i+1)%8 == 0:
+            H = np.concatenate(horz, axis=1)
+            vert[row] = H
+            row -= 1
+            horz = []
+    fin = np.concatenate(vert, axis=0)
+    return fin
+
+def change_indicator():
+    workingFolder   = './data/mask'
+    imageType       = 'jpg'
+    filename    = workingFolder + "/*." + imageType
+    images      = glob.glob(filename)
+
+    horz = []
+    vert = [[],[],[],[],[],[],[],[]]
+
+    row = 7
+
+    for i in range(len(images)):
+        img     = cv2.imread(images[i])
+        img    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+
+        kernel = np.ones((13, 13), np.uint8)
+        closing = cv2.morphologyEx(img, cv2.MORPH_CLOSE, kernel)
+        opening = cv2.morphologyEx(closing, cv2.MORPH_OPEN, kernel)
+
+        contour_img = cv2.threshold(opening,127,255,cv2.THRESH_BINARY)[1]
+        check_contour_img = contour_img.copy()
+
+        edge = cv2.Canny(contour_img, 175, 175)
+        cnts = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        
+        cnts = imutils.grab_contours(cnts)
+        cnts = sorted(cnts, key=cv2.contourArea, reverse=True)
+        rect_areas = []
+        sum_area = 0
+
+        if len(cnts) != 0:
+
+            # Remove small blobs
+            for c in cnts:
+                (x, y, w, h) = cv2.boundingRect(c)
+                sum_area += w*h
+                rect_areas.append(w * h)
+            avg_area = sum_area/len(rect_areas)
+
+            for c in cnts:
+                (x, y, w, h) = cv2.boundingRect(c)
+                cnt_area = w * h
+                if cnt_area < 0.75*avg_area:
+                    contour_img[y:y + h, x:x + w] = 0
+            
+            #Find max area 
+            for contour in cnts:
+                area = cv2.contourArea(contour)
+                max_contour = max(cnts, key = cv2.contourArea)
+                x_max,y_max,w_max,h_max = cv2.boundingRect(max_contour)
+                max_contour_area = w_max*h_max
+                rect = cv2.minAreaRect(contour)
+                box = cv2.boxPoints(rect)
+                box = np.int0(box)
+                width = int(rect[1][0])
+                height = int(rect[1][1])
+
+            # Remove large blobs
+            for c in cnts:
+                (x, y, w, h) = cv2.boundingRect(c)
+                cnt_area = w * h
+                if cnt_area < max_contour_area or cnt_area > 0.8*(64*64):
+                    # bolb_rect = cv2.minAreaRect(c)
+                    # bolb_box = cv2.boxPoints(bolb_rect)
+                    # bolb_box = np.int0(bolb_box)
+                    # cv2.fillConvexPoly(contour_img, bolb_box, 0)
+                    contour_img[y:y + h, x:x + w] = 0
+        
+        horz.append(contour_img)
+
+        if i!= 0 and (i+1)%8 == 0:
+            H = np.concatenate(horz, axis=1)
+            vert[row] = H
+            row -= 1
+            horz = []
+    fin = np.concatenate(vert, axis=0)
+    # cv2.imshow("win", contour_img)
+    # cv2.waitKey()
+    return fin
+    
+        
+
+
+        
+
+# ----------------------------------------------------------------------
+def track_feature(gray):
+    # Find the chess board corners
+    corners = cv2.goodFeaturesToTrack(gray,81,0.01,10)
+    corners = np.int0(corners)
+
+    for i in corners:
+        x,y = i.ravel()
+        chess_corner.append((x,y))
+    #print(chess_corner)
+    return chess_corner
 
 def getHist(folname):
     workingFolder   = folname
@@ -681,9 +819,9 @@ def getHist(folname):
         histogram.append(h)
         
     return (histogram,name)
-
     
 def compareHist(hist1, hist2, name):
+    change = 0
     for i in range(len(hist1)):        
         plt.subplot(8, 8, 8*(8-(i//8)-1)+(i%8)+1)
         plt.plot(list(range(len(hist1)*4)), hist1[i],color='green')
@@ -692,30 +830,18 @@ def compareHist(hist1, hist2, name):
         plt.twinx()
         plt.plot(list(range(len(hist2)*4)), hist2[i], color='blue')
         plt.ylabel(name[i])
-    # plt.show()
-
-    for compare_method in range(4):
-        for i in range(len(hist1)): 
-            base_test = cv2.compareHist(hist1[i], hist2[i], compare_method)
-            print('Method:', compare_method, ' : ', base_test)
-
-    return False
+    plt.show()
 
 
-
-
-# ----------------------------------------------------------------------
-def track_feature(gray):
-    # Find the chess board corners
-    corners = cv2.goodFeaturesToTrack(gray,81,0.01,10)
-    corners = np.int0(corners)
-
-    for i in corners:
-        x,y = i.ravel()
-        chess_corner.append((x,y))
-    #print(chess_corner)
-    return chess_corner
-
+    for i in range(len(hist1)): 
+        base_test = cv2.compareHist(hist1[i], hist2[i], 1)
+        print(name[i], ' : ', base_test)
+        if base_test >500:
+            change += 1
+    if change == 2:
+        return False
+    else:
+        return True
 
 
     
