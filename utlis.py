@@ -204,7 +204,7 @@ def field_contour(img, name):
     # cv2.waitKey()
 
 def get_extend_point(x1,y1,x2,y2, ratio):
-    # dist = math.sqrt(math.pow((x1-x2), 2) + math.pow((y1-y2), 2)) * ratio
+    dist = math.sqrt(math.pow((x1-x2), 2) + math.pow((y1-y2), 2)) * ratio
     m = (y1 - y2) / (x1-x2)
     c = y1 - (x1 * m)
     diff_x = abs(x1-x2)*ratio
@@ -313,6 +313,7 @@ def find_edge(chess_corner,side, ratio):
     return new_corner
         
 def define_side(full_chess_corner, chess_corner,edited_img, img):
+    final_img = edited_img.copy()
     sides = [[],[],[],[]]
     test = []
     color = [[],[],[],[]]
@@ -586,7 +587,7 @@ def define_side(full_chess_corner, chess_corner,edited_img, img):
                         [w, w]], dtype="float32")
     matrix = cv2.getPerspectiveTransform(src_pts, dst_pts)
     M = cv2.getPerspectiveTransform(src_pts, dst_pts)
-    warped = cv2.warpPerspective(img, M, (w, w))
+    warped = cv2.warpPerspective(final_img, M, (w, w))
 
     return warped, test, final_coor
 
@@ -667,7 +668,7 @@ def changes():
 
     row = 7
 
-    for i in range(len(images1)):
+    for i in range(len(images1)-1, -1, -1):
         img1     = cv2.imread(images1[i])
         img2     = cv2.imread(images2[i])
 
@@ -682,16 +683,18 @@ def changes():
 
         name = "./data/mask/" + images1[i][len(images1[i])-6::]
 
+        # print(images1[i][len(images1[i])-6::])
+
         cv2.imwrite(name, canvas)
 
         horz.append(canvas)
 
-        if i!= 0 and (i+1)%8 == 0:
-            H = np.concatenate(horz, axis=1)
+        if i != 64 and (i)%8 == 0:
+            H = np.concatenate(horz, axis=0)
             vert[row] = H
             row -= 1
             horz = []
-    fin = np.concatenate(vert, axis=0)
+    fin = np.concatenate(vert, axis=1)
     return fin
 
 def change_indicator():
@@ -705,7 +708,7 @@ def change_indicator():
 
     row = 7
 
-    for i in range(len(images)):
+    for i in range(len(images)-1, -1, -1):
         img     = cv2.imread(images[i])
         img    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -716,7 +719,7 @@ def change_indicator():
         contour_img = cv2.threshold(opening,127,255,cv2.THRESH_BINARY)[1]
         check_contour_img = contour_img.copy()
 
-        edge = cv2.Canny(contour_img, 175, 175)
+        edge = cv2.Canny(check_contour_img, 175, 175)
         cnts = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         
         cnts = imutils.grab_contours(cnts)
@@ -725,19 +728,21 @@ def change_indicator():
         sum_area = 0
 
         if len(cnts) != 0:
-
             # Remove small blobs
             for c in cnts:
                 (x, y, w, h) = cv2.boundingRect(c)
                 sum_area += w*h
+                print(sum_area)
                 rect_areas.append(w * h)
             avg_area = sum_area/len(rect_areas)
+
+            # 2450
 
             for c in cnts:
                 (x, y, w, h) = cv2.boundingRect(c)
                 cnt_area = w * h
                 if cnt_area < 0.75*avg_area:
-                    contour_img[y:y + h, x:x + w] = 0
+                    check_contour_img[y:y + h, x:x + w] = 0
             
             #Find max area 
             for contour in cnts:
@@ -760,88 +765,106 @@ def change_indicator():
                     # bolb_box = cv2.boxPoints(bolb_rect)
                     # bolb_box = np.int0(bolb_box)
                     # cv2.fillConvexPoly(contour_img, bolb_box, 0)
-                    contour_img[y:y + h, x:x + w] = 0
+                    check_contour_img[y:y + h, x:x + w] = 0
+            
+            for c in cnts:
+                (x, y, w, h) = cv2.boundingRect(c)
+                cnt_area = w * h
+                if cnt_area < 0.3*(64*64):
+                    check_contour_img[y:y + h, x:x + w] = 0
+                circle, corner = detect_shape(c)
+                print(corner)
+                if circle == False:
+                    check_contour_img[y:y + h, x:x + w] = 0
         
-        horz.append(contour_img)
+        horz.append(check_contour_img)
 
-        if i!= 0 and (i+1)%8 == 0:
-            H = np.concatenate(horz, axis=1)
+        if i != 64 and (i)%8 == 0:
+            H = np.concatenate(horz, axis=0)
             vert[row] = H
             row -= 1
             horz = []
-    fin = np.concatenate(vert, axis=0)
-    # cv2.imshow("win", contour_img)
-    # cv2.waitKey()
+    fin = np.concatenate(vert, axis=1)
     return fin
     
-        
+def detect_shape(c):
+    # initialize the shape name and approximate the contour
+    result = False
+    shape = "unidentified"
+    peri = cv2.arcLength(c, True)
+    approx = cv2.approxPolyDP(c, 0.04 * peri, True)
+    # if the shape is a triangle, it will have 3 vertices
+    if len(approx) >= 5:
+        shape = "circle"
+        result = True
+    # return the name of the shape
+    return result, len(approx)  
 
 
-        
 
 # ----------------------------------------------------------------------
-def track_feature(gray):
-    # Find the chess board corners
-    corners = cv2.goodFeaturesToTrack(gray,81,0.01,10)
-    corners = np.int0(corners)
+# def track_feature(gray):
+#     # Find the chess board corners
+#     corners = cv2.goodFeaturesToTrack(gray,81,0.01,10)
+#     corners = np.int0(corners)
 
-    for i in corners:
-        x,y = i.ravel()
-        chess_corner.append((x,y))
-    #print(chess_corner)
-    return chess_corner
+#     for i in corners:
+#         x,y = i.ravel()
+#         chess_corner.append((x,y))
+#     #print(chess_corner)
+#     return chess_corner
 
-def getHist(folname):
-    workingFolder   = folname
-    imageType       = 'jpg'
-    filename    = workingFolder + "/*." + imageType
-    images      = glob.glob(filename)
+# def getHist(folname):
+#     workingFolder   = folname
+#     imageType       = 'jpg'
+#     filename    = workingFolder + "/*." + imageType
+#     images      = glob.glob(filename)
 
-    histogram = []
-    name = []
-    # channels = [0, 1]
-    # h_bins = 50
-    # s_bins = 60
-    # histSize = [h_bins, s_bins]
-    # # hue varies from 0 to 179, saturation from 0 to 255
-    # h_ranges = [0, 180]
-    # s_ranges = [0, 256]
-    # ranges = h_ranges + s_ranges # concat lists
+#     histogram = []
+#     name = []
+#     # channels = [0, 1]
+#     # h_bins = 50
+#     # s_bins = 60
+#     # histSize = [h_bins, s_bins]
+#     # # hue varies from 0 to 179, saturation from 0 to 255
+#     # h_ranges = [0, 180]
+#     # s_ranges = [0, 256]
+#     # ranges = h_ranges + s_ranges # concat lists
 
-    for fname in images:
-        img     = cv2.imread(fname)
-        gray    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-        h = cv2.calcHist([gray], [0], None, [256], [0, 256])
-        # h = cv2.calcHist([gray], channels, None, histSize, ranges, accumulate=False)
-        cv2.normalize(h, h, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+#     for fname in images:
+#         img     = cv2.imread(fname)
+#         gray    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
+#         h = cv2.calcHist([gray], [0], None, [256], [0, 256])
+#         # h = cv2.calcHist([gray], channels, None, histSize, ranges, accumulate=False)
+#         cv2.normalize(h, h, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 
-        name.append(fname[len(fname)-6:len(fname)-4])
-        histogram.append(h)
+#         name.append(fname[len(fname)-6:len(fname)-4])
+#         histogram.append(h)
         
-    return (histogram,name)
+#     return (histogram,name)
     
-def compareHist(hist1, hist2, name):
-    change = 0
-    for i in range(len(hist1)):        
-        plt.subplot(8, 8, 8*(8-(i//8)-1)+(i%8)+1)
-        plt.plot(list(range(len(hist1)*4)), hist1[i],color='green')
-        plt.ylabel(name[i])
+# def compareHist(hist1, hist2, name):
+#     change = 0
+#     for i in range(len(hist1)):        
+#         plt.subplot(8, 8, 8*(8-(i//8)-1)+(i%8)+1)
+#         plt.plot(list(range(len(hist1)*4)), hist1[i],color='green')
+#         plt.ylabel(name[i])
 
-        plt.twinx()
-        plt.plot(list(range(len(hist2)*4)), hist2[i], color='blue')
-        plt.ylabel(name[i])
-    plt.show()
+#         plt.twinx()
+#         plt.plot(list(range(len(hist2)*4)), hist2[i], color='blue')
+#         plt.ylabel(name[i])
+#     plt.show()
 
 
-    for i in range(len(hist1)): 
-        base_test = cv2.compareHist(hist1[i], hist2[i], 1)
-        print(name[i], ' : ', base_test)
-        if base_test >500:
-            change += 1
-    if change == 2:
-        return False
-    else:
-        return True
+#     for i in range(len(hist1)): 
+#         base_test = cv2.compareHist(hist1[i], hist2[i], 1)
+#         print(name[i], ' : ', base_test)
+#         if base_test >500:
+#             change += 1
+#     if change == 2:
+#         return False
+#     else:
+#         return True
 
 
     
