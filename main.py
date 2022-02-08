@@ -1,83 +1,82 @@
-import numpy as np
 import cv2
 import glob
-import argparse
-import sys, time, math, yaml
-import utlis
-import statistics
-import os 
-from skimage.filters import threshold_local
-
+import Chessboard, HandTrack, SetVariable
 
 # Set parameter for images files
-workingFolder   = "./calibrate_folder_1"
+workingFolder   = "./data/template"
 imageType       = 'jpg'
 filename    = workingFolder + "/*." + imageType
 images      = glob.glob(filename)
 #------------------------------------------
 
-
-
+ 
 def main():
-    compare = False
-    if len(images) < 1:
-        print("No image found")
-        sys.exit()
+    chessboard = Chessboard.Compare()
+    before_move_count = 0
+    after_move_count = 0
+    fname = 0
+    state = 1
+    
+    while True:
+        # print(before_move_count, after_move_count, state)
+        status_detect1, status_detect2 = 'undetected', 'undetected'
+        if SetVariable.Camera.cap1.isOpened():
+            _, image_cam1 = SetVariable.Camera.cap1.read()
+            annotated_image1 = HandTrack.annotated_image(image_cam1, 1)
+            cv2.imshow("annotated_image1", annotated_image1)
+            hand_landmark1, status_detect1 = HandTrack.handLandmarkProcess(0)
+            HandTrack.clearData()
+            if (status_detect1 == "detected"):
+                print("DETECTED_CAM1")
 
-    else:    
-        for index in range(len(images)):
-            fname = images[index]
-            # Read the file and convert file
-            img     = cv2.imread(fname)
-            img     = utlis.image_resize(img, height = 500)
-            gray    = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
-            utlis.field_contour(img.copy(), './data/gray.jpg')
-            gray_edit_color = cv2.imread('./data/gray.jpg')
-            gray_edit    = cv2.cvtColor(gray_edit_color,cv2.COLOR_BGR2GRAY)
-
-            # Detect Chessboard corner
-            print("Reading image ", fname)
-            chess_corner = utlis.detect_chessboard(gray_edit_color.copy(), gray.copy())
-            dist = math.sqrt((chess_corner[20][0]-chess_corner[21][0])**2 + (chess_corner[20][1]-chess_corner[21][1])**2)
-            new_chess_corner = utlis.find_edge(chess_corner,6,1)
-            full_chess_corner = utlis.find_edge(new_chess_corner,8,1)
-            extended_chess_corner = utlis.find_edge(new_chess_corner,8,1/8)
-
-            # Define side and warp chessboard             
-            warped, test, warp_coor = utlis.define_side(full_chess_corner, extended_chess_corner, gray_edit.copy(), gray.copy())
-            
+        if SetVariable.Camera.cap2.isOpened():
+            _, image_cam2 = SetVariable.Camera.cap2.read()
+            annotated_image2 = HandTrack.annotated_image(image_cam2, 2)
+            cv2.imshow("annotated_image2", annotated_image2)
+            hand_landmark2, status_detect2 = HandTrack.handLandmarkProcess(1)
+            HandTrack.clearData()
+            if (status_detect2 == "detected"):
+                print("DETECTED_CAM2")
         
-            # Displaying the image 
-            image = gray_edit_color.copy()
-            for i in extended_chess_corner  :
-                image = cv2.circle(image, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
-            cv2.imshow('Detect Point', image)
+        if status_detect1 == 'undetected' and status_detect2 == 'undetected':
+            if state == 1:
+                if before_move_count >= 30 or before_move_count == 0:
+                    before_move_count = 0
+                    name = "./data/history/" + str(fname) + '.jpg'
+                    print("SAVED", fname)
+                    cv2.imwrite(name, image_cam1)
+                    fname += 1  
+                    if fname > 100:
+                        fname = 0
+                before_move_count += 1
+            if state == 2:
+                after_move_count += 1
+                if after_move_count %10 == 0:
+                    print("WILL COMPARE IN....", (70-after_move_count)//10)
+                if after_move_count >= 70:
+                    state = 3
+        else:
+            state = 2
+            before_move_count = 0
+            after_move_count = 0
 
-            if compare == False:
-                warped1 = warped.copy()
-                # Split image and add border
-                split_cell = utlis.split_cell(warped1, 'cropped_1')
-                cv2.imshow('split_cell_1', split_cell)
-                compare = True
-            elif compare == True:
-                # Split image and add border
-                split_cell_1 = utlis.split_cell(warped1, 'cropped_1')
-                cv2.imshow('split_cell_1', split_cell_1)
+        if state == 3:    
+            # _, img = SetVariable.Camera.cap1.read()
+            
+            img = cv2.imread(images[0])
+            chessboard.get_move(img)
 
-                warped2 = warped.copy()
-                # Split image and add border
-                split_cell_2 = utlis.split_cell(warped2, 'cropped_2')
-                cv2.imshow('split_cell_2', split_cell_2)
+            # _, img = SetVariable.Camera.cap1.read()
+            img = cv2.imread(images[1])
+            chessboard.get_move(img)
+            chessboard.start = False
+            state = 1
+            after_move_count = 0
 
-                compare_cell = utlis.changes()
-                # cv2.imshow('compare_cell', compare_cell)
-                indicated_cell = utlis.change_indicator()
-                cv2.imshow('indicated_cell', indicated_cell)
-
-                warped1 = warped2.copy()
-
-            cv2.waitKey()    
-
+        HandTrack.clearData()
+        key = cv2.waitKey(1)
+        if key == 27:  # ESC
+            break
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
