@@ -3,6 +3,7 @@ import numpy as np
 import mediapipe as mp
 from collections import deque
 import argparse
+import matlab.engine
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -30,6 +31,10 @@ def get_args():
 
     return args
 
+class Matlab:
+    engine = matlab.engine.start_matlab()
+    engine.addpath("./MatlabLib", nargout = 0)
+    engine.addpath("./MatlabLib/matching", nargout = 0)
 
 class Camera:
     rt_landmark_array = [np.zeros((21, 3)),np.zeros((21, 3))]
