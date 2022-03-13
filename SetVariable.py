@@ -21,11 +21,11 @@ def get_args():
     parser.add_argument("--min_detection_confidence",
                         help='min_detection_confidence',
                         type=float,
-                        default=0.55)
+                        default=0.9)
     parser.add_argument("--min_tracking_confidence",
                         help='min_tracking_confidence',
                         type=int,
-                        default=0.4)
+                        default=0.9)
 
     args = parser.parse_args()
 
@@ -53,9 +53,11 @@ class Camera:
     cap_height = args.height
 
     # Camera preparation ----------------------------------------------------
-    cap1 = cv.VideoCapture(cap_device1, cv.CAP_DSHOW)
-    cap1.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-    cap1.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+    # cap1 = cv.VideoCapture(cap_device1, cv.CAP_DSHOW)
+    cap1 = cv.VideoCapture('test.mp4')
+
+    # cap1.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
+    # cap1.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
     cap2 = cv.VideoCapture(cap_device2, cv.CAP_DSHOW)
     cap2.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)

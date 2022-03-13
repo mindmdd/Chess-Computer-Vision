@@ -21,13 +21,13 @@ def corner_warp(chess_corner,edited_img):
 
     return warped
 
-def define_side(full_chess_corner, extended_chess_corner,edited_img):
+def define_side(full_chess_corner, extended_chess_corner, for_readding_img):
     
-    final_img = edited_img.copy()
     # final_img = cv2.equalizeHist(final_img)
     sides = [[],[],[],[]]
     test = []
     gray = [[],[],[],[]]
+    extra_case = False
 
     for i in range(len(extended_chess_corner)):
         if i%11 == 0:
@@ -48,22 +48,26 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
             sides[3].append(mid)
             
     for coor in sides[0]:
-        gray[0].append(final_img[int(coor[1]), int(coor[0])])
+        gray[0].append(for_readding_img[int(coor[1]), int(coor[0])])
         test.append([int(coor[0]),int(coor[1])])
     for coor in sides[1]:
-        gray[1].append(final_img[int(coor[1]), int(coor[0])])
+        gray[1].append(for_readding_img[int(coor[1]), int(coor[0])])
         test.append([int(coor[0]),int(coor[1])])
     for coor in sides[2]:
-        gray[2].append(final_img[int(coor[1]), int(coor[0])])
+        gray[2].append(for_readding_img[int(coor[1]), int(coor[0])])
         test.append([int(coor[0]),int(coor[1])])
     for coor in sides[3]:
-        gray[3].append(final_img[int(coor[1]), int(coor[0])])
+        gray[3].append(for_readding_img[int(coor[1]), int(coor[0])])
         test.append([int(coor[0]),int(coor[1])])
-
+    
     result = []
+    avg_color = []
     check_w = 0
     check_b = 0
     check_e = 0
+    for m in range(4):
+        avg_color.append(np.average(gray[m]))
+    white_index = np.where(avg_color == np.amax(avg_color))
 
     for m in range(4):
         white = 0
@@ -84,7 +88,6 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
             else:
                 temp.append(-1)
                 error -= 1
-        
         if error < -2:
             if m == 0:
                 c1 = full_chess_corner[0]
@@ -100,7 +103,7 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
                 c2 = full_chess_corner[80]         
             check_e += 1
             result.append([c1, c2,'error', m, check_e])
-            print(m , 'error')
+            print(m , 'error', gray[m])
         else:
             if black > 3 and white <= 1:
                 if m == 0:
@@ -118,7 +121,7 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
 
                 check_b += 1  
                 result.append([c1, c2, 'black', m, check_b])
-                print(m , 'black')
+                print(m , 'black', gray[m])
             elif black <= 1 and white > 3:
                 if m == 0:
                     c1 = full_chess_corner[0]
@@ -135,7 +138,7 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
                     
                 check_w += 1
                 result.append([c1, c2, 'white', m, check_w])
-                print(m , 'white')
+                print(m , 'white', gray[m])
             else:
                 if m == 0:
                     c1 = full_chess_corner[0]
@@ -150,22 +153,30 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
                     c1 = full_chess_corner[72]
                     c2 = full_chess_corner[80] 
                 result.append([c1, c2, 'checker', m])
-                print(m , 'checker')
+                print(m , 'checker', gray[m])
 
     if check_b == 1 and check_w == 1:
         for i in range(len(result)):
             if result[i][2] == 'white':
-                get_side1 = result[i][3]
-                x1 = result[i][0][0]
-                y1 = result[i][0][1]
-                x2 = result[i][1][0]
-                y2 = result[i][1][1]
+                w = i
             elif result[i][2] == 'black':
-                get_side2 = result[i][3]
-                x3 = result[i][0][0]
-                y3 = result[i][0][1]
-                x4 = result[i][1][0]
-                y4 = result[i][1][1]
+                b = i
+        if np.abs(w-b) == 2:
+            for i in range(len(result)):
+                if result[i][2] == 'white':
+                    get_side1 = result[i][3]
+                    x1 = result[i][0][0]
+                    y1 = result[i][0][1]
+                    x2 = result[i][1][0]
+                    y2 = result[i][1][1]
+                elif result[i][2] == 'black':
+                    get_side2 = result[i][3]
+                    x3 = result[i][0][0]
+                    y3 = result[i][0][1]
+                    x4 = result[i][1][0]
+                    y4 = result[i][1][1]
+        else:
+            extra_case = True
     elif check_b != 1 and check_w == 1:
         for i in range(len(result)):
             if result[i][2] == 'white':
@@ -198,43 +209,78 @@ def define_side(full_chess_corner, extended_chess_corner,edited_img):
                     y3 = result[1][0][1]
                     x4 = result[1][1][0]
                     y4 = result[1][1][1]
-    elif check_b == 1 and check_w != 1:
-        for i in range(len(result)):
-            if result[i][2] == 'black':
-                get_side2 = result[i][3] 
-                x3 = result[i][0][0]
-                y3 = result[i][0][1]
-                x4 = result[i][1][0]
-                y4 = result[i][1][1]
-                if i == 0:     
-                    get_side1 = result[2][3]                
-                    x1 = result[2][0][0]
-                    y1 = result[2][0][1]
-                    x2 = result[2][1][0]
-                    y2 = result[2][1][1]
-                elif i == 1: 
-                    get_side1 = result[3][3]                    
-                    x1 = result[3][0][0]
-                    y1 = result[3][0][1]
-                    x2 = result[3][1][0]
-                    y2 = result[3][1][1]
-                elif i == 2:   
-                    get_side1 = result[0][3]                  
-                    x1 = result[0][0][0]
-                    y1 = result[0][0][1]
-                    x2 = result[0][1][0]
-                    y2 = result[0][1][1]
-                elif i == 3:   
-                    get_side1 = result[1][3]                  
-                    x1 = result[1][0][0]
-                    y1 = result[1][0][1]
-                    x2 = result[1][1][0]
-                    y2 = result[1][1][1]
+    # elif check_b == 1 and check_w != 1:
+    #     for i in range(len(result)):
+    #         if result[i][2] == 'black':
+    #             get_side2 = result[i][3] 
+    #             x3 = result[i][0][0]
+    #             y3 = result[i][0][1]
+    #             x4 = result[i][1][0]
+    #             y4 = result[i][1][1]
+    #             if i == 0:     
+    #                 get_side1 = result[2][3]                
+    #                 x1 = result[2][0][0]
+    #                 y1 = result[2][0][1]
+    #                 x2 = result[2][1][0]
+    #                 y2 = result[2][1][1]
+    #             elif i == 1: 
+    #                 get_side1 = result[3][3]                    
+    #                 x1 = result[3][0][0]
+    #                 y1 = result[3][0][1]
+    #                 x2 = result[3][1][0]
+    #                 y2 = result[3][1][1]
+    #             elif i == 2:   
+    #                 get_side1 = result[0][3]                  
+    #                 x1 = result[0][0][0]
+    #                 y1 = result[0][0][1]
+    #                 x2 = result[0][1][0]
+    #                 y2 = result[0][1][1]
+    #             elif i == 3:   
+    #                 get_side1 = result[1][3]                  
+    #                 x1 = result[1][0][0]
+    #                 y1 = result[1][0][1]
+    #                 x2 = result[1][1][0]
+    #                 y2 = result[1][1][1]
+    else:
+        extra_case = True
     
-    warp_corners = [[x2, y2], [x3, y3], [x4, y4], [x1, y1]]
-    warped = ImageProcessing.warp_corner(warp_corners, edited_img.copy(), 640, 640)
+    if extra_case == True:
+        print('white_index: ', white_index[0][0])
+        i = white_index[0][0]
+        get_side1 = result[i][3]
+        x1 = result[i][0][0]
+        y1 = result[i][0][1]
+        x2 = result[i][1][0]
+        y2 = result[i][1][1]
+        if i == 0:
+            get_side2 = result[2][3]                    
+            x3 = result[2][0][0]
+            y3 = result[2][0][1]
+            x4 = result[2][1][0]
+            y4 = result[2][1][1]
+        elif i == 1:   
+            get_side2 = result[3][3]                  
+            x3 = result[3][0][0]
+            y3 = result[3][0][1]
+            x4 = result[3][1][0]
+            y4 = result[3][1][1]
+        elif i == 2: 
+            get_side2 = result[0][3]                    
+            x3 = result[0][0][0]
+            y3 = result[0][0][1]
+            x4 = result[0][1][0]
+            y4 = result[0][1][1]
+        elif i == 3:   
+            get_side2 = result[1][3]                  
+            x3 = result[1][0][0]
+            y3 = result[1][0][1]
+            x4 = result[1][1][0]
+            y4 = result[1][1][1]
 
-    return warped, warp_corners
+    print('warp side: ', get_side1, get_side2)
+    warp_corners = [[x2, y2], [x3, y3], [x4, y4], [x1, y1]]
+
+    return warp_corners
 
 def find_edge(chess_corner,side, ratio):
     temp_new_corner = []
@@ -270,7 +316,6 @@ def find_edge(chess_corner,side, ratio):
                 ys.append(chess_corner[n][1])
             point = get_extend_point(xs,ys,ratio)
             temp_new_corner.append([point[0],point[1]])
-
             # print("IN3")
             x1 = chess_corner[i+1][0]
             y1 = chess_corner[i+1][1]

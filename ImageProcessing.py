@@ -54,7 +54,7 @@ def field_contour(img, name):
     gray = cv2.medianBlur(gray_cp,3)
     cv2.imwrite(name, gray_blur)
 
-def add_contrast(input_img, brightness = 50, contrast = 64):
+def add_contrast(input_img, brightness, contrast):
         
         if brightness != 0:
             if brightness > 0:
