@@ -1,0 +1,1 @@
+please do not delete this folder, it is for storing images during the process

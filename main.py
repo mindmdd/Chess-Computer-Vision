@@ -175,11 +175,11 @@ def main():
     SetVariable.Matlab.engine.quit()
 
     # Delete all picture if exit the screen
-    dir_list = ['color_img' , 'current_final_img' , 'prev_final_img' , 'current_tresh_img' , 'prev_tresh_img' , 'prev_img' , 'current_img']
+    dir_list = ['history', 'color_img' , 'current_final_img' , 'prev_final_img' , 'current_tresh_img' , 'prev_tresh_img' , 'prev_img' , 'current_img']
     for dir in dir_list:
-        dir = './Image/' + dir
-        for f in os.listdir(dir):
-            os.remove(os.path.join(dir, f))
+        filelist = glob.glob(os.path.join('./Image/' + dir, "*.jpg"))
+        for f in filelist:
+            os.remove(f)
 
 if __name__ == "__main__":
     main() 
