@@ -9,7 +9,7 @@ from Chessboard import Chessboard
 approved = True
 
 # Set parameter for images files
-workingFolder   = "./Image/history"
+workingFolder   = "./images/history"
 imageType       = 'jpg'
 filename    = workingFolder + "/*." + imageType
 images = glob.glob(filename)
@@ -82,7 +82,7 @@ def main():
                         full_fname = '0' + str(fname)
                     else:
                         full_fname = str(fname)
-                    name = "./Image/history/" + full_fname + '.jpg'
+                    name = "./images/history/" + full_fname + '.jpg'
                     print("SAVED", fname)
                     cv2.imwrite(name, image_cam)
                     fname += 1
@@ -177,7 +177,7 @@ def main():
     # Delete all picture if exit the screen
     dir_list = ['history', 'color_img' , 'current_final_img' , 'prev_final_img' , 'current_tresh_img' , 'prev_tresh_img' , 'prev_img' , 'current_img']
     for dir in dir_list:
-        filelist = glob.glob(os.path.join('./Image/' + dir, "*.jpg"))
+        filelist = glob.glob(os.path.join('./images/' + dir, "*.jpg"))
         for f in filelist:
             os.remove(f)
 

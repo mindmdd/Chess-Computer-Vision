@@ -54,7 +54,7 @@ class Camera:
         print("From Camera")
     else:
         print("No Camera")
-        cap = cv.VideoCapture('./Image/test.mp4')
+        cap = cv.VideoCapture('./images/test.mp4')
 
     cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
     cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)

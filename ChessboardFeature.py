@@ -114,7 +114,7 @@ class ChessboardFeature():
 
                 letter = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
                 num = ['8', '7', '6', '5', '4', '3', '2', '1']
-                fname = './Image/' + folname + '/'+ letter[x] + num[y] + '.jpg'
+                fname = './images/' + folname + '/'+ letter[x] + num[y] + '.jpg'
 
                 vert.append(result)
                 #print(fname)
@@ -390,7 +390,7 @@ class ChessboardFeature():
         filename    = treshSavingFolder + "/*." + imageType
         images      = glob.glob(filename)
 
-        colorFiles      = glob.glob('./Image/color_img' + "/*." + imageType)
+        colorFiles      = glob.glob('./images/color_img' + "/*." + imageType)
 
 
         horz_final = []
@@ -436,7 +436,7 @@ class ChessboardFeature():
             else:
                 board_color = 'white.jpg'
 
-            final_img = cv2.imread('./Image/board_template/'+board_color)
+            final_img = cv2.imread('./images/board_template/'+board_color)
             
             if len(cnts) >= 1:
                 if minDist[1] == 0:

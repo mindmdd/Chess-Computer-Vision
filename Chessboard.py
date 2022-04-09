@@ -21,14 +21,14 @@ class Chessboard():
         color_img = img.copy()
         contrast_img = ImageProcessing.add_contrast(img.copy(), 50, 64)
         contrast_gray    = cv2.cvtColor(contrast_img.copy(),cv2.COLOR_BGR2GRAY)
-        cv2.imwrite('./Image/contrast_gray.jpg', contrast_gray)
+        cv2.imwrite('./images/contrast_gray.jpg', contrast_gray)
         
         normal_gray    = cv2.cvtColor(img.copy(),cv2.COLOR_BGR2GRAY)
-        cv2.imwrite('./Image/norml_gray.jpg', normal_gray)
+        cv2.imwrite('./images/norml_gray.jpg', normal_gray)
 
 
-        ImageProcessing.field_contour(img.copy(), './Image/clahe_gray.jpg')
-        clahe_gray = cv2.imread('./Image/clahe_gray.jpg')
+        ImageProcessing.field_contour(img.copy(), './images/clahe_gray.jpg')
+        clahe_gray = cv2.imread('./images/clahe_gray.jpg')
 
         cv2.imwrite("./MatlabLib/data/img.jpg", contrast_gray)
         corners,chessboards = SetVariable.Matlab.engine.demo("MatlabLib/data/img.jpg", nargout=2)
@@ -39,7 +39,7 @@ class Chessboard():
                 coord = corners['p'][int(index)-1]
                 chess_corner.append([coord[0]-1, coord[1]-1])
 
-        detected_chessboard = cv2.imread('./Image/clahe_gray.jpg')
+        detected_chessboard = cv2.imread('./images/clahe_gray.jpg')
         for i in chess_corner  :
             detected_chessboard = cv2.circle(detected_chessboard, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
 
@@ -52,10 +52,10 @@ class Chessboard():
         print('full chesscorner: ', np.array(full_chess_corner).shape)
 
         # Displaying the image 
-        detected_chessboard = cv2.imread('./Image/clahe_gray.jpg')
+        detected_chessboard = cv2.imread('./images/clahe_gray.jpg')
         for i in full_chess_corner  :
             self.detected_chessboard = cv2.circle(detected_chessboard, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
-        cv2.imwrite('./Image/Detect.jpg', detected_chessboard)
+        cv2.imwrite('./images/Detect.jpg', detected_chessboard)
         warp_corners = ChessboardFeature.get_warp_corner(full_chess_corner, extended_chess_corner, cv2.cvtColor(clahe_gray.copy(),cv2.COLOR_BGR2GRAY))
 
         new_contrast_img = ImageProcessing.add_contrast(img.copy(), -20, 60)
@@ -69,32 +69,32 @@ class Chessboard():
             self.prev_detected_chessboard = detected_chessboard.copy()
             self.prev_warped_chessboard = warped_chessboard.copy()
             self.prev_color_warped_chessboard = warped_color_img.copy()
-            cv2.imwrite('./Image/prev_original_img.jpg', warped_chessboard)
+            cv2.imwrite('./images/prev_original_img.jpg', warped_chessboard)
             ChessboardFeature.split_cell(self.prev_warped_chessboard, 'prev_img')
-            self.all_prev_tresh_cell_img, self.list_all_prev_cell = CellFeature.detect_peice('./Image/prev_img', './Image/prev_tresh_img')
-            self.color1, self.color2 = CellFeature.detect_color('./Image/color_img')
-            self.all_prev_cell_img, self.list_color_all_prev_cell = ChessboardFeature.draw_chessboard('./Image/prev_tresh_img', './Image/prev_final_img', [self.color1, self.color2])
+            self.all_prev_tresh_cell_img, self.list_all_prev_cell = CellFeature.detect_peice('./images/prev_img', './images/prev_tresh_img')
+            self.color1, self.color2 = CellFeature.detect_color('./images/color_img')
+            self.all_prev_cell_img, self.list_color_all_prev_cell = ChessboardFeature.draw_chessboard('./images/prev_tresh_img', './images/prev_final_img', [self.color1, self.color2])
             self.start = True
 
         # Compare current frame with previous frame
         elif self.start == True:
 
             ChessboardFeature.split_cell(self.all_prev_tresh_cell_img, 'prev_tresh_img')
-            cv2.imwrite('./Image/prev_tresh_img.jpg', self.all_prev_tresh_cell_img)
-            cv2.imwrite('./Image/prev_final_img.jpg', self.all_prev_cell_img)
-            cv2.imwrite('./Image/prev_original_img.jpg', self.prev_warped_chessboard)
+            cv2.imwrite('./images/prev_tresh_img.jpg', self.all_prev_tresh_cell_img)
+            cv2.imwrite('./images/prev_final_img.jpg', self.all_prev_cell_img)
+            cv2.imwrite('./images/prev_original_img.jpg', self.prev_warped_chessboard)
             
             prev_split_cell = ChessboardFeature.split_cell(self.prev_warped_chessboard, 'prev_img')
             prev_detected_chessboard = self.prev_detected_chessboard.copy()
 
             self.current_warped_chessboard = warped_chessboard.copy()
             self.current_color_warped_chessboard = warped_color_img.copy()
-            cv2.imwrite('./Image/current_original_img.jpg', warped_chessboard)
+            cv2.imwrite('./images/current_original_img.jpg', warped_chessboard)
             current_split_cell = ChessboardFeature.split_cell(self.current_warped_chessboard, 'current_img')
             
-            self.all_current_tresh_cell_img, self.list_all_current_cell = CellFeature.detect_peice('./Image/current_img', './Image/current_tresh_img')
-            # self.color1, self.color2 = ChessboardCell.detect_color('./Image/color_img')
-            self.all_current_cell_img, list_color_all_current_cell = ChessboardFeature.draw_chessboard('./Image/current_tresh_img', './Image/current_final_img', [self.color1, self.color2])
+            self.all_current_tresh_cell_img, self.list_all_current_cell = CellFeature.detect_peice('./images/current_img', './images/current_tresh_img')
+            # self.color1, self.color2 = ChessboardCell.detect_color('./images/color_img')
+            self.all_current_cell_img, list_color_all_current_cell = ChessboardFeature.draw_chessboard('./images/current_tresh_img', './images/current_final_img', [self.color1, self.color2])
             
             horz1[0] = ImageProcessing.image_resize(prev_detected_chessboard, height = 250)
             horz2[0] = ImageProcessing.image_resize(self.detected_chessboard, height = 250)
