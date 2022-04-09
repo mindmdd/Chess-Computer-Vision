@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from ChessboardFeature import ChessboardFeature
-import ImageProcessing, SetVariable
+import utlis.ImageProcessing as ImageProcessing, utlis.SetVariable as SetVariable
 from CellFeature import CellFeature
 
 
@@ -42,7 +42,6 @@ class Chessboard():
         detected_chessboard = cv2.imread('./Image/clahe_gray.jpg')
         for i in chess_corner  :
             detected_chessboard = cv2.circle(detected_chessboard, (int(i[0]),int(i[1])), 3, (0,0,255), -1)
-        cv2.imwrite('./Image/Detect_ORG.jpg', detected_chessboard)
 
         print('chesscorner: ', np.array(chess_corner).shape)
         if np.array(chess_corner).shape[0] / 7 != 7:

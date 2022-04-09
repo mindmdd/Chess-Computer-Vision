@@ -2,7 +2,7 @@ import cv2
 import glob
 import numpy as np
 import imutils
-import ImageProcessing
+import utlis.ImageProcessing as ImageProcessing
 from sklearn.neighbors import NearestNeighbors
 
 class CellFeature():
@@ -60,9 +60,6 @@ class CellFeature():
             kernel = np.ones((3, 3), np.uint8)
             img = cv2.erode(img, kernel, iterations=1)
             img = cv2.dilate(img, kernel, iterations=1)
-            
-            checkName = './Image/check' + '/' + images[i][len(images[i])-6::]
-            cv2.imwrite(checkName, img)
 
             edge = cv2.Canny(img.copy(), 175, 175)
             cnts = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)

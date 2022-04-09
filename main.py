@@ -1,6 +1,7 @@
 import cv2
 import glob, os
-import HandTrack, SetVariable
+import utlis.HandTrack as HandTrack
+import utlis.SetVariable as SetVariable
 from Chessboard import Chessboard
 
 # Aprrove param: 
@@ -65,7 +66,7 @@ def main():
         hand_landmark, status_detect = HandTrack.handLandmarkProcess(0)
         HandTrack.clearData()
 
-        # TODO received robot_status    
+        # TODO receive robot_status    
         
         # If no hand detected and the robot is not working
         if status_detect == 'undetected' and robot_working != 2:
@@ -147,7 +148,7 @@ def main():
                 chessboard_process_state = Chess.detect_chess(image_cam)
                 from_cell, to_cell, added_cell, removed_cell = Chess.get_move()
 
-            # TODO send the from_cell and to_cell to other part
+            # TODO send the 'from_cell' and 'to_cell' result
             # TODO the approved feedback have to be determined
 
             # Save the result only if it is approved
@@ -174,9 +175,11 @@ def main():
     SetVariable.Matlab.engine.quit()
 
     # Delete all picture if exit the screen
-    image_files = glob.glob(filename)
-    for f in image_files:
-        os.remove(f)
+    dir_list = ['color_img' , 'current_final_img' , 'prev_final_img' , 'current_tresh_img' , 'prev_tresh_img' , 'prev_img' , 'current_img']
+    for dir in dir_list:
+        dir = './Image/' + dir
+        for f in os.listdir(dir):
+            os.remove(os.path.join(dir, f))
 
 if __name__ == "__main__":
     main() 
