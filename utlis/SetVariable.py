@@ -32,8 +32,8 @@ def get_args():
 
 class Matlab:
     engine = matlab.engine.start_matlab()
-    engine.addpath("./MatlabLib", nargout = 0)
-    engine.addpath("./MatlabLib/matching", nargout = 0)
+    engine.addpath("./matlab", nargout = 0)
+    engine.addpath("./matlab/matching", nargout = 0)
 
 class Camera:
     rt_landmark_array = [np.zeros((21, 3)),np.zeros((21, 3))]

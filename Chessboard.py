@@ -30,8 +30,8 @@ class Chessboard():
         ImageProcessing.field_contour(img.copy(), './images/clahe_gray.jpg')
         clahe_gray = cv2.imread('./images/clahe_gray.jpg')
 
-        cv2.imwrite("./MatlabLib/data/img.jpg", contrast_gray)
-        corners,chessboards = SetVariable.Matlab.engine.demo("MatlabLib/data/img.jpg", nargout=2)
+        cv2.imwrite("./matlab/data/img.jpg", contrast_gray)
+        corners,chessboards = SetVariable.Matlab.engine.demo("matlab/data/img.jpg", nargout=2)
 
         chess_corner = []
         for set in range(len(chessboards[0])-1,-1,-1):
