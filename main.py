@@ -1,7 +1,11 @@
 import cv2
-import glob
-import HandTrack, SetVariable, ImageProcessing
-from Detect.Changes import Compare
+import glob, os
+import HandTrack, SetVariable
+from Chessboard import Chessboard
+
+# Aprrove param: 
+# TODO this is just a temporary set up, it has to be determined by feedback function instead
+approved = True
 
 # Set parameter for images files
 workingFolder   = "./Image/history"
@@ -10,111 +14,169 @@ filename    = workingFolder + "/*." + imageType
 images = glob.glob(filename)
 #------------------------------------------
 
-saving_sequence = 1
-countdown_time = 1
-
- 
 def main():
-    Chess = Compare()
+
+    # Declare class
+    Chess = Chessboard()
+
+    # Saving interval time (second)
+    saving_interval = 1
+
+    # Count down after hand detected --> act as a buffer and to make sure that hand is out of frame
+    countdown_time = 1
+
+    # Current clock
     before_move_count = 0
     after_move_count = 0
-    rotate_deg = 0
-    fname = 0
-    state = 1
-    num = 0
-    crop_area = 130
-    while True:
-        images = glob.glob(filename)
-        status_detect1, status_detect2 = 'undetected', 'undetected'
-        # if SetVariable.Camera.cap1.isOpened():
-        _, image_cam1 = SetVariable.Camera.cap1.read() 
-        image_cam1 = image_cam1[0 : image_cam1.shape[0], crop_area:image_cam1.shape[1]-crop_area]
-        annotated_image1 = HandTrack.annotated_image(image_cam1, 1)
-        cv2.imshow("annotated_image1", annotated_image1)
-        hand_landmark1, status_detect1 = HandTrack.handLandmarkProcess(0)
-        HandTrack.clearData()
-        # if (status_detect1 == "detected"):
-        #     print("DETECTED_CAM1")
 
-        if SetVariable.Camera.cap2.isOpened():
-            _, image_cam2 = SetVariable.Camera.cap2.read()
-            annotated_image2 = HandTrack.annotated_image(image_cam2, 2)
-            cv2.imshow("annotated_image2", annotated_image2)
-            hand_landmark2, status_detect2 = HandTrack.handLandmarkProcess(1)
-            HandTrack.clearData()
-            # if (status_detect2 == "detected"):
-            #     print("DETECTED_CAM2")
+    # Filename for saving the sequence
+    fname = 0
+
+    # Determine the stae of processing:
+    # 1 = ready
+    # 2 = hand detected, wait a little bit
+    # 3 = process picture after the hand is not detected any more, and get the result
+    processing_state = 1
+
+    # Determine manipulator status:
+    # 1 = ready
+    # 2 = working
+    # 3 = done working
+    robot_working = 1
+
+    # crop image edge to reduce unnecessary elements that may appear in the picture
+    crop_area = 80
+
+    while True:
+        # Get saved image
+        images = glob.glob(filename)
+
+        # Hand detecting status
+        status_detect = 'undetected'
+
+        # Read either camera or saved video, in case camera is not available
+        _, image_cam = SetVariable.Camera.cap.read()
+        # Crop picture edge
+        image_cam = image_cam[0 : image_cam.shape[0], crop_area:image_cam.shape[1]-crop_area]
+        # Get real time hand tracked image
+        annotated_image = HandTrack.annotated_image(image_cam, 1)
+        cv2.imshow("annotated_image", annotated_image)
+        # Get detecting status
+        hand_landmark, status_detect = HandTrack.handLandmarkProcess(0)
+        HandTrack.clearData()
+
+        # TODO received robot_status    
         
-        if status_detect1 == 'undetected' and status_detect2 == 'undetected':
-            if state == 1:
-                if before_move_count >= saving_sequence*10 or before_move_count == 0:
+        # If no hand detected and the robot is not working
+        if status_detect == 'undetected' and robot_working != 2:
+            if processing_state == 1:
+                # save the image at the start and continus as the interval time setted
+                if before_move_count >= saving_interval*10 or before_move_count == 0:
+                    # Reset the time
                     before_move_count = 0
+
+                    # Save captured image:
+                    # to make all single digit number save as 01, 02, ... not 1, 2 --> so program will be able to sort the file correctly
                     if fname < 10 :
                         full_fname = '0' + str(fname)
                     else:
                         full_fname = str(fname)
                     name = "./Image/history/" + full_fname + '.jpg'
                     print("SAVED", fname)
-                    cv2.imwrite(name, image_cam1)
-                    fname += 1  
+                    cv2.imwrite(name, image_cam)
+                    fname += 1
+
+                    # Reset file name number if it reaches 100  
                     if fname >= 100:
                         fname = 0
                 before_move_count += 1
-            if state == 2:
+            
+            # if hand is not detected after is has been detect
+            if processing_state == 2:
+                # Will process the picture only after hand is out as time setted
                 after_move_count += 1
                 if after_move_count %10 == 0:
                     print("WILL COMPARE IN....", (countdown_time*10-after_move_count)//10)
                 if after_move_count >= countdown_time*10:
-                    state = 3
-        else:
-            state = 2
+                    processing_state = 3
+
+        # if hand detected or the robot just finish working
+        elif status_detect == 'detected' or robot_working == 3:
+            processing_state = 2
             before_move_count = 0
             after_move_count = 0
+            robot_working = 1
 
-        if state == 3:    
-            # _, img = SetVariable.Camera.cap1.read()
+        # Process the picture
+        if processing_state == 3: 
+            # get previous picture frame to compare   
             if fname < 2 :
+                # use the first frame if there are not enough picture
                 if len(images)-1 < 2:
-                    new_fname = 0
+                    prev_fname = 0
+                #if there are enough frame but current firle name is at the beginning (since we only record 99 frame)
                 else:
-                    new_fname = 99 - (2 - fname)
+                    prev_fname = 99 - (2 - fname)
             else:
-                new_fname = fname  - 2
+                prev_fname = fname  - 2
 
+            # If this is the first frame
             if Chess.start == False:
-                print(len(images)-1, fname, new_fname)
-                print(images[new_fname])
-                img = cv2.imread(images[new_fname])
-                state = Chess.get_move(img)
-                if state == 'error':
-                    img = cv2.imread(images[new_fname+1])
-                    state = Chess.get_move(img)
+                
+                # read the previous image frame recorded
+                img = cv2.imread(images[prev_fname])
 
+                # process the image
+                chessboard_process_state = Chess.detect_chess(img)
 
-            # _, img = SetVariable.Camera.cap1.read()
-            # img = cv2.imread(image_cam1)
-            # img = cv2.resize(image_cam1, dim, interpolation = cv2.INTER_AREA)
-            state = Chess.get_move(image_cam1)
-            while state == 'error':
-                _, image_cam1 = SetVariable.Camera.cap1.read()
-                image_cam1 = image_cam1[0 : image_cam1.shape[0], crop_area:image_cam1.shape[1]-crop_area]
-                state = Chess.get_move(image_cam1)
-            # Chess.start = False
-            state = 1
-            after_move_count = 0
-            num += 1
-
-        
-        HandTrack.clearData()
-        key = cv2.waitKey(1)
-        if key == 27:  # ESC
-            break
+                # redo the process again until it is not error
+                while chessboard_process_state == 'error':
+                    img = cv2.imread(images[prev_fname+1])
+                    chessboard_process_state = Chess.detect_chess(img)
             
-        # if num == len(images)-1:
-        #     break
-        
+            # Process the current frame
+            chessboard_process_state = Chess.detect_chess(image_cam)
+            from_cell, to_cell, added_cell, removed_cell = Chess.get_move()
+
+            # redo the process again until it is not error --> unable to detect chessboard or there are extra cell
+            while chessboard_process_state == 'error' or added_cell != [] or len(from_cell) != 1 or len(to_cell) != 1:
+                # Get new picture from camera
+                _, image_cam = SetVariable.Camera.cap.read()
+                image_cam = image_cam[0 : image_cam.shape[0], crop_area:image_cam.shape[1]-crop_area]
+                # Reprocess
+                chessboard_process_state = Chess.detect_chess(image_cam)
+                from_cell, to_cell, added_cell, removed_cell = Chess.get_move()
+
+            # TODO send the from_cell and to_cell to other part
+            # TODO the approved feedback have to be determined
+
+            # Save the result only if it is approved
+            if approved == True:
+                Chess.reset()
+
+            # Reset the processing_state
+            processing_state = 1
+            # Reset recorded coutdown time
+            after_move_count = 0
+
+        # Clear handtrack data
+        HandTrack.clearData()
+
+        # Press ESC to exit loop
+        key = cv2.waitKey(1)
+        if key == 27:
+            break
+
+    # Destroy all window        
     cv2.destroyAllWindows()
+
+    # Quit MATLAB engine
     SetVariable.Matlab.engine.quit()
+
+    # Delete all picture if exit the screen
+    image_files = glob.glob(filename)
+    for f in image_files:
+        os.remove(f)
 
 if __name__ == "__main__":
     main() 

@@ -8,8 +8,7 @@ import matlab.engine
 def get_args():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--device1", type=int, default=0)
-    parser.add_argument("--device2", type=int, default=4)
+    parser.add_argument("--device", type=int, default=4)
     parser.add_argument("--width", help='cap width', type=int, default=960)
     parser.add_argument("--height", help='cap height', type=int, default=540)
 
@@ -21,11 +20,11 @@ def get_args():
     parser.add_argument("--min_detection_confidence",
                         help='min_detection_confidence',
                         type=float,
-                        default=0.9)
+                        default=0.5)
     parser.add_argument("--min_tracking_confidence",
                         help='min_tracking_confidence',
                         type=int,
-                        default=0.9)
+                        default=0.5)
 
     args = parser.parse_args()
 
@@ -40,31 +39,27 @@ class Camera:
     rt_landmark_array = [np.zeros((21, 3)),np.zeros((21, 3))]
     bounding = [0,0]
     landmark_array = [np.zeros((21, 3)),np.zeros((21, 3))]
-    landmark_history_cam1 = deque(maxlen=50)
-    landmark_history_cam2 = deque(maxlen=50)
-    bounding_history_cam1 = deque(maxlen=50)
-    bounding_history_cam2 = deque(maxlen=50)
+    landmark_history_cam = deque(maxlen=50)
+    bounding_history_cam = deque(maxlen=50)
     
     # Argument parsing ------------------------------------------------------
     args = get_args()
-    cap_device1 = args.device1
-    cap_device2 = args.device2
+    cap_device = args.device
     cap_width = args.width
     cap_height = args.height
 
     # Camera preparation ----------------------------------------------------
-    # cap1 = cv.VideoCapture(cap_device1, cv.CAP_DSHOW)
-    cap1 = cv.VideoCapture('test.mp4')
+    cap = cv.VideoCapture(cap_device, cv.CAP_DSHOW)
+    if cap.isOpened():
+        print("From Camera")
+    else:
+        print("No Camera")
+        cap = cv.VideoCapture('test.mp4')
 
-    # cap1.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-    # cap1.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
+    cap.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
+    cap.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
 
-    cap2 = cv.VideoCapture(cap_device2, cv.CAP_DSHOW)
-    cap2.set(cv.CAP_PROP_FRAME_WIDTH, cap_width)
-    cap2.set(cv.CAP_PROP_FRAME_HEIGHT, cap_height)
-
-    save_image1 = []
-    save_image2 = []
+    save_image = []
 
 class HandModel:
     # Argument parsing --------------------------------------------------------------------  

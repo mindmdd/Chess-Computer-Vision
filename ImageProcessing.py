@@ -1,6 +1,17 @@
 import cv2
 import numpy as np
 
+def canny_threshold(img):
+    low_threshold = 15
+    ratio = 3
+    kernel_size = 3
+    img_blur = cv2.blur(img, (3,3))
+    final_img = cv2.Canny(img_blur, low_threshold, low_threshold*ratio, kernel_size)
+    # mask = detected_edges != 0
+    # dst = img * (mask[:,:,None].astype(img.dtype))
+    return final_img
+
+
 def check_circle(c):
     # initialize the shape name and approximate the contour
     result = False
