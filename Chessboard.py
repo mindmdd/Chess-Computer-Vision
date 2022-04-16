@@ -94,7 +94,7 @@ class Chessboard():
             
             self.all_current_tresh_cell_img, self.list_all_current_cell = CellFeature.detect_peice('./images/current_img', './images/current_tresh_img')
             # self.color1, self.color2 = ChessboardCell.detect_color('./images/color_img')
-            self.all_current_cell_img, list_color_all_current_cell = ChessboardFeature.draw_chessboard('./images/current_tresh_img', './images/current_final_img', [self.color1, self.color2])
+            self.all_current_cell_img, self.list_color_all_current_cell = ChessboardFeature.draw_chessboard('./images/current_tresh_img', './images/current_final_img', [self.color1, self.color2])
             
             horz1[0] = ImageProcessing.image_resize(prev_detected_chessboard, height = 250)
             horz2[0] = ImageProcessing.image_resize(self.detected_chessboard, height = 250)
@@ -121,6 +121,7 @@ class Chessboard():
         return 'done'
 
     def reset(self):
+        self.list_color_all_prev_cell = self.list_color_all_current_cell.copy()
         self.all_prev_tresh_cell_img = self.all_current_tresh_cell_img.copy()
         self.all_prev_cell_img = self.all_current_cell_img.copy()
         self.prev_detected_chessboard = self.detected_chessboard.copy()
@@ -143,6 +144,10 @@ class Chessboard():
             for cell in self.list_all_current_cell:
                 if cell not in self.list_all_prev_cell:
                     removed_cell.append(cell)
+                    from_cell.append(cell)
+                    for color_cell in self.list_color_all_current_cell:
+                        if color_cell not in self.list_color_all_prev_cell:
+                            to_cell.append(cell)
 
             for cell in self.list_all_prev_cell:
                 if cell not in self.list_all_current_cell:
@@ -155,5 +160,18 @@ class Chessboard():
         print('ROMOVED:', removed_cell)
         print("------------------------------------------------")
 
+        alphabet = ['a','b','c','d','e','f','g','h']
+
+        for cell_list in [from_cell, to_cell, added_cell, removed_cell]:
+            for cell_index, cell in enumerate(cell_list):
+                for alp_index, letter in enumerate(alphabet):
+                    if cell[0] == letter:
+                        cell_list[cell_index] = ((alp_index+1) * int(cell[1]))-1
+
+        print('FROM:', from_cell)
+        print('TO:', to_cell)
+        print('ADDED:', added_cell)
+        print('ROMOVED:', removed_cell)
+        print("------------------------------------------------")               
         return from_cell, to_cell, added_cell, removed_cell
    
