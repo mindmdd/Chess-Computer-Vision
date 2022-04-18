@@ -48,6 +48,9 @@ def main():
     # crop image edge to reduce unnecessary elements that may appear in the picture
     crop_area = 80
 
+    # To save first frame
+    first_frame = True
+
     while True:
         # Get saved image
         images = glob.glob(filename)
@@ -65,6 +68,18 @@ def main():
         # Get detecting status
         hand_landmark, status_detect = HandTrack.handLandmarkProcess(0)
         HandTrack.clearData()
+
+        if first_frame == True:
+            # Reset the time
+            before_move_count = 0
+
+            # Save captured image:
+            # to make all single digit number save as 00                
+            name = "./images/history/00.jpg"
+            print("SAVED", fname)
+            cv2.imwrite(name, image_cam)
+            fname += 1
+            first_frame = False
 
         # TODO receive robot_status    
         
