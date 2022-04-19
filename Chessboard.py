@@ -133,6 +133,7 @@ class Chessboard():
         from_cell, to_cell, added_cell, removed_cell = [], [], [], []
         
         if len(self.list_all_prev_cell) == len(self.list_all_current_cell):
+            print("IN1")
             for cell in self.list_all_current_cell:
                 if cell not in self.list_all_prev_cell:
                     to_cell.append(cell)
@@ -140,15 +141,18 @@ class Chessboard():
             for cell in self.list_all_prev_cell:
                 if cell not in self.list_all_current_cell:
                     from_cell.append(cell)
-        else:
-            for cell in self.list_all_current_cell:
-                if cell not in self.list_all_prev_cell:
+
+        elif len(self.list_all_prev_cell) > len(self.list_all_current_cell):
+            print("IN2")
+            for cell in self.list_all_prev_cell:
+                if cell not in self.list_all_current_cell:
                     removed_cell.append(cell)
                     from_cell.append(cell)
                     for color_cell in self.list_color_all_current_cell:
                         if color_cell not in self.list_color_all_prev_cell:
-                            to_cell.append(cell)
-
+                            to_cell.append(color_cell[0])
+        elif len(self.list_all_prev_cell) < len(self.list_all_current_cell):
+            print("IN3")
             for cell in self.list_all_prev_cell:
                 if cell not in self.list_all_current_cell:
                     added_cell.append(cell)
